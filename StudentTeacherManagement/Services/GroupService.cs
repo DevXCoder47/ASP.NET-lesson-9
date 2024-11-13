@@ -31,23 +31,34 @@ public class GroupService : IGroupService
             .ToArrayAsync(cancellationToken);
     }
 
-    public Task<Group?> GetGroupById(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Group?> GetGroupById(Guid id, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var groups = _context.Groups.AsQueryable();
+        var group = await groups.FirstOrDefaultAsync(g => g.Id == id);
+        return group;
     }
 
     #endregion
 
     #region DML
 
-    public Task<Group> AddGroup(Group group, CancellationToken cancellationToken = default)
+    public async Task<Group> AddGroup(Group group, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (group == null)
+            throw new ArgumentException("Group must not be null");
+        await _context.Groups.AddAsync(group, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+        return group;
     }
 
-    public Task DeleteGroup(Guid id, CancellationToken cancellationToken = default)
+    public async Task DeleteGroup(Guid id, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var groups = _context.Groups.AsQueryable();
+        var group = groups.FirstOrDefault(g => g.Id == id);
+        if (group == null)
+            throw new ArgumentException("Such group doesn't exist");
+        _context.Groups.Remove(group);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task AddStudentToGroup(Guid groupId, Guid studentId, CancellationToken cancellationToken = default)

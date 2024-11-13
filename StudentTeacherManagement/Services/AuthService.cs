@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StudentTeacherManagement.Core.Interfaces;
 using StudentTeacherManagement.Core.Models;
+using StudentTeacherManagement.DTOs;
 using StudentTeaherManagement.Storage;
 
 namespace StudentTeacherManagement.Services;
@@ -23,7 +24,7 @@ public class AuthService : IAuthService
     private IConfiguration _configuration;
 
     private static IDictionary<int, User> _unverifiedUsers = new Dictionary<int, User>();
-
+    private static IDictionary<string, int> _dataForPasswordResets = new Dictionary<string, int>();
     public AuthService(DataContext context, IEmailSender emailSender, IConfiguration configuration)
     {
         _context = context;
@@ -66,18 +67,22 @@ public class AuthService : IAuthService
         if (!Regex.IsMatch(user.Password, PasswordPattern))
         {
             throw new ArgumentException("Password is invalid", nameof(user.Password));
-        }   
+        }  
+        if(user.Role != "Student" && user.Role != "Teacher")
+        {
+            throw new ArgumentException("Role is invalid", nameof(user.Role));
+        }
     }
 
     public async Task<(User?, string)> Login(string email, string password)
     {
-        // check email and password
-        var user = await _context.Students.SingleOrDefaultAsync(s => s.Email.Equals(email) && s.Password.Equals(password));
-        return (user, GenerateToken(user));
-        // [5, 4, 1, 43, 1, 2, 1]
-        // First(1) => 1
-        // Single(1) => exception
-        // Single(4) => 4
+        var student = await _context.Students.SingleOrDefaultAsync(s => s.Email.Equals(email) && s.Password.Equals(password));
+        if(student != null)
+            return (student, GenerateToken(student.Role));
+        var teacher = await _context.Teachers.SingleOrDefaultAsync(t => t.Email.Equals(email) && t.Password.Equals(password));
+        if (teacher != null)
+            return (teacher, GenerateToken(teacher.Role));
+        throw new ArgumentException("Invalid email or password");
     }
 
     public async Task<(User, string)> ValidateAccount(string email, int code)
@@ -87,29 +92,59 @@ public class AuthService : IAuthService
         {
             if (unverifiedUser.Email.Equals(email) && (DateTime.UtcNow - unverifiedUser.CreatedAt) < MaxVerificationTime)
             {
-                var student = new Student()
+                switch (unverifiedUser.Role)
                 {
-                    FirstName = unverifiedUser.FirstName,
-                    LastName = unverifiedUser.LastName,
-                    Email = unverifiedUser.Email,
-                    Password = unverifiedUser.Password,
-                    DateOfBirth = unverifiedUser.DateOfBirth,
-                    CreatedAt = DateTime.UtcNow,
-                };
-                _context.Students.Add(student);
-                await _context.SaveChangesAsync();
-                return (student, GenerateToken(student));
+                    case "Student":
+                        var student = new Student()
+                        {
+                            FirstName = unverifiedUser.FirstName,
+                            LastName = unverifiedUser.LastName,
+                            Email = unverifiedUser.Email,
+                            Password = unverifiedUser.Password,
+                            Role = unverifiedUser.Role,
+                            DateOfBirth = unverifiedUser.DateOfBirth,
+                            CreatedAt = DateTime.UtcNow,
+                        };
+                        _context.Students.Add(student);
+                        await _context.SaveChangesAsync();
+                        return (student, GenerateToken(student.Role));
+                    case "Teacher":
+                        var teacher = new Teacher()
+                        {
+                            FirstName = unverifiedUser.FirstName,
+                            LastName = unverifiedUser.LastName,
+                            Email = unverifiedUser.Email,
+                            Password = unverifiedUser.Password,
+                            Role = unverifiedUser.Role,
+                            DateOfBirth = unverifiedUser.DateOfBirth,
+                            CreatedAt = DateTime.UtcNow,
+                        };
+                        _context.Teachers.Add(teacher);
+                        await _context.SaveChangesAsync();
+                        return (teacher, GenerateToken(teacher.Role));
+                } 
             }
         }
-
         throw new ArgumentException("Code or email is incorrect");
     }
-
-    private string GenerateToken(User user)
+    public async Task<(string, int)> GenerateResetPasswordCode(string email)
+    {
+        var student = await _context.Students.SingleOrDefaultAsync(s => s.Email == email);
+        var teacher = student == null
+        ? await _context.Teachers.SingleOrDefaultAsync(t => t.Email == email)
+        : null;
+        if (student == null && teacher == null)
+            throw new ArgumentException("email not registered");
+        var code = new Random().Next(MinCodeValue, MaxCodeValue);
+        _dataForPasswordResets[email] = code;
+        await _emailSender.Send($"Your password reset code: {code}");
+        return (email, code);
+    }
+    private string GenerateToken(string role)
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Role, nameof(Student)),
+            new(ClaimTypes.Role, role),
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
@@ -126,5 +161,25 @@ public class AuthService : IAuthService
         var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
         return jwt;
+    }
+
+    public async Task ResetPassword((int code, string email, string newPassword) passwordResetData)
+    {
+        if (!_dataForPasswordResets.ContainsKey(passwordResetData.email))
+            throw new ArgumentException("Wrong email");
+        if (_dataForPasswordResets[passwordResetData.email] != passwordResetData.code)
+            throw new ArgumentException("Wrong code");
+        if(!Regex.IsMatch(passwordResetData.newPassword, PasswordPattern))
+            throw new ArgumentException("Password is invalid");
+        var student = await _context.Students.SingleOrDefaultAsync(s => s.Email == passwordResetData.email);
+        if(student != null)
+            student.Password = passwordResetData.newPassword;
+        else
+        {
+            var teacher = await _context.Teachers.SingleAsync(t => t.Email == passwordResetData.email);
+            teacher.Password = passwordResetData.newPassword;
+        }
+        await _context.SaveChangesAsync();
+        _dataForPasswordResets.Remove(passwordResetData.email);
     }
 }

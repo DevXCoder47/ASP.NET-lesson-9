@@ -22,10 +22,20 @@ public class AuthController : ControllerBase
    [HttpPost("register")]
    public async Task<ActionResult> Register([FromBody] RegisterDTO user)
    {
-      await _authService.Register(_mapper.Map<Student>(user));
-      return Ok();
+        try
+        {
+            switch (user.Role) {
+                case "Student": await _authService.Register(_mapper.Map<Student>(user)); break;
+                case "Teacher": await _authService.Register(_mapper.Map<Teacher>(user)); break;
+                default: throw new ArgumentException("Role is invalid");
+            }
+            return Ok();
+        }
+        catch(ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
    }
-
    [HttpPost("verifyUser")]
    public async Task<ActionResult<AuthResponse>> VerifyUser([FromBody] VerificationData verificationData)
    {
@@ -36,11 +46,40 @@ public class AuthController : ControllerBase
    [HttpPost("login")]
    public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginDTO user)
    {
-      var (loggedUser, token) = await _authService.Login(user.Email, user.Password);
-
-      if (loggedUser == null)
-         return NotFound();
-      
-      return Ok(new AuthResponse(){ User = loggedUser, Token = token });
+        try
+        {
+            var (loggedUser, token) = await _authService.Login(user.Email, user.Password);
+            return Ok(new AuthResponse() { User = loggedUser, Token = token });
+        }
+        catch(ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
    }
+    [HttpPost("forgot_password")]
+    public async Task<ActionResult<VerificationData>> RequestPasswordReset([FromBody] RequestPasswordResetData data)
+    {
+        try
+        {
+            var (email, code) = await _authService.GenerateResetPasswordCode(data.Email);
+            return Ok(new VerificationData() { Email = email, Code = code});
+        }
+        catch(ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+    [HttpPatch("reset_password")]
+    public async Task<ActionResult> ResetPassword([FromBody] PasswordResetData resetData)
+    {
+        try
+        {
+            await _authService.ResetPassword((resetData.Code, resetData.Email, resetData.NewPassword));
+            return Ok();
+        }
+        catch(ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 }

@@ -16,7 +16,7 @@ public class DataContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=StudentTeacherDB;Integrated Security=True;")
+        optionsBuilder.UseSqlServer("Server=KOMPUTER\\SQLEXPRESS;Database=TeacherStudentDB;Trusted_Connection=True;TrustServerCertificate=True;")
             .UseLazyLoadingProxies()
             .EnableSensitiveDataLogging();
     }

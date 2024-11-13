@@ -1,10 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StudentTeacherManagement", "StudentTeacherManagement\StudentTeacherManagement.csproj", "{B5BA5C1F-C67C-419E-BD7F-6B9189088D88}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StudentTeacherManagement", "StudentTeacherManagement\StudentTeacherManagement.csproj", "{B5BA5C1F-C67C-419E-BD7F-6B9189088D88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StudentTeacherManagement.Core", "StudentTeacherManagement.Core\StudentTeacherManagement.Core.csproj", "{26349070-6FF5-4804-906A-9A827AF1710F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StudentTeacherManagement.Core", "StudentTeacherManagement.Core\StudentTeacherManagement.Core.csproj", "{26349070-6FF5-4804-906A-9A827AF1710F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StudentTeaherManagement.Storage", "StudentTeaherManagement.Storage\StudentTeaherManagement.Storage.csproj", "{84DE9AB5-AC6A-44AE-BA03-9D899D9AF893}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StudentTeaherManagement.Storage", "StudentTeaherManagement.Storage\StudentTeaherManagement.Storage.csproj", "{84DE9AB5-AC6A-44AE-BA03-9D899D9AF893}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XUnitTest", "XUnitTest\XUnitTest.csproj", "{AFA906F5-BEB6-47CE-8190-203606562FD6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +29,15 @@ Global
 		{84DE9AB5-AC6A-44AE-BA03-9D899D9AF893}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{84DE9AB5-AC6A-44AE-BA03-9D899D9AF893}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{84DE9AB5-AC6A-44AE-BA03-9D899D9AF893}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFA906F5-BEB6-47CE-8190-203606562FD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFA906F5-BEB6-47CE-8190-203606562FD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFA906F5-BEB6-47CE-8190-203606562FD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFA906F5-BEB6-47CE-8190-203606562FD6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {673D1421-4901-49F2-B38E-CB2355BB8749}
 	EndGlobalSection
 EndGlobal

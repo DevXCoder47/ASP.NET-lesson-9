@@ -8,4 +8,6 @@ public interface IAuthService
     Task<(User?, string)> Login(string email, string password);
 
     Task<(User, string)> ValidateAccount(string email, int code);
+    Task<(string, int)> GenerateResetPasswordCode(string email);
+    Task ResetPassword((int code, string email, string newPassword) passwordResetData);
 }
